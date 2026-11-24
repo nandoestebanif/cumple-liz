@@ -326,7 +326,7 @@
 <script>
 (function(){
   var musica=document.getElementById("musica"),btnM=document.getElementById("musica-btn"),EVS=["pointerdown","keydown","touchstart","scroll"];
-  musica.volume=0.5;
+  musica.volume=0.3;
   function pintarBtn(){var on=!musica.paused;btnM.textContent=on?"🔊":"🔇";btnM.setAttribute("aria-label",on?"Pausar la canción":"Reproducir la canción");btnM.classList.toggle("sonando",on);}
   function quitar(){EVS.forEach(function(ev){window.removeEventListener(ev,porGesto,true)});}
   function tocar(){var p=musica.play();if(p&&p.then){p.then(function(){quitar();pintarBtn();},pintarBtn);}else pintarBtn();}
