@@ -130,6 +130,9 @@
   .hermanos label{font-family:"Caveat Brush";font-size:26px;padding:2px 0}
   .casillas input:checked+label,.hermanos input:checked+label{background:var(--grano),var(--menta);box-shadow:3px 4px 0 rgba(61,52,82,.8);transform:rotate(-1.5deg)}
   .casillas input:focus-visible+label,.hermanos input:focus-visible+label{outline:3px dashed var(--tinta);outline-offset:3px}
+  .musica-btn{position:fixed;right:14px;bottom:16px;z-index:25;width:52px;height:52px;border-radius:50%;border:2.5px solid var(--tinta);background:var(--grano),var(--mantequilla);font-size:24px;line-height:1;cursor:pointer;box-shadow:3px 4px 0 rgba(61,52,82,.85);display:grid;place-items:center;padding:0}
+  .musica-btn.sonando{animation:latido 1.2s ease-in-out infinite}
+  @keyframes latido{50%{transform:scale(1.08) rotate(-6deg)}}
   @media (max-width:360px){.ojo{flex-basis:100px;height:100px}.ojo svg{width:100px;height:100px}.ojo img{width:78px;height:78px;inset:11px}.frase{font-size:20px}}
   @media (prefers-reduced-motion:reduce){*,*::before{animation:none!important}.arco{stroke-dashoffset:0}}
 </style>
@@ -316,10 +319,22 @@
   </main>
   <p class="pie">Con cariño, Liz Adieli ♡</p>
 </div>
+<audio id="musica" src="https://nandoestebanif.github.io/cumple-liz/cancion.mp3" loop preload="auto"></audio>
+<button class="musica-btn" id="musica-btn" type="button" aria-label="Reproducir la canción">🔇</button>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
 (function(){
+  var musica=document.getElementById("musica"),btnM=document.getElementById("musica-btn"),EVS=["pointerdown","keydown","touchstart","scroll"];
+  musica.volume=0.5;
+  function pintarBtn(){var on=!musica.paused;btnM.textContent=on?"🔊":"🔇";btnM.setAttribute("aria-label",on?"Pausar la canción":"Reproducir la canción");btnM.classList.toggle("sonando",on);}
+  function quitar(){EVS.forEach(function(ev){window.removeEventListener(ev,porGesto,true)});}
+  function tocar(){var p=musica.play();if(p&&p.then){p.then(function(){quitar();pintarBtn();},pintarBtn);}else pintarBtn();}
+  function porGesto(e){if(e.target&&e.target.closest&&e.target.closest("#musica-btn"))return;if(musica.paused&&!musica.dataset.pausado)tocar();}
+  EVS.forEach(function(ev){window.addEventListener(ev,porGesto,{capture:true,passive:true})});
+  btnM.addEventListener("click",function(){if(musica.paused){delete musica.dataset.pausado;tocar();}else{musica.pause();musica.dataset.pausado="1";quitar();}});
+  musica.addEventListener("play",pintarBtn);musica.addEventListener("pause",pintarBtn);
+  tocar();
   var COL=["#ee8b84","#f6b79b","#f7d57c","#a7d8bd","#9fc8ec","#c4aee6","#f3b3c9"];
   function toast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("ver");clearTimeout(toast.k);toast.k=setTimeout(function(){t.classList.remove("ver")},2000);}
   function lluviaCrayolas(){
