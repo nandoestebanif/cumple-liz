@@ -112,7 +112,7 @@
   .codigo{display:block;width:100%;height:42px;margin-top:10px}
   .sello{position:absolute;right:14px;top:4px;width:118px;animation:sello .5s .2s ease-out both}
   @keyframes sello{0%{opacity:0;transform:rotate(-14deg) scale(2.3)}100%{opacity:1;transform:rotate(-14deg) scale(1)}}
-  .otra{display:block;margin:12px auto 0;background:none;border:0;font:inherit;color:var(--tinta-2);text-decoration:underline;cursor:pointer;font-size:17px}
+  .ya{text-align:center;margin:12px 0 0;font-size:18px;color:var(--tinta-2)}
   .pie{text-align:center;margin:16px 0 0;font-family:"Caveat Brush";font-size:22px;color:var(--tinta-2)}
   .crayola{position:fixed;top:-20px;width:12px;height:5px;border-radius:3px;z-index:30;pointer-events:none;animation:cae linear forwards}
   @keyframes cae{to{transform:translateY(110vh) rotate(720deg)}}
@@ -334,6 +334,9 @@
   EVS.forEach(function(ev){window.addEventListener(ev,porGesto,{capture:true,passive:true})});
   btnM.addEventListener("click",function(){if(musica.paused){delete musica.dataset.pausado;tocar();}else{musica.pause();musica.dataset.pausado="1";quitar();}});
   musica.addEventListener("play",pintarBtn);musica.addEventListener("pause",pintarBtn);
+  var pausaPorSalir=false;
+  document.addEventListener("visibilitychange",function(){if(document.hidden){if(!musica.paused){pausaPorSalir=true;musica.pause();}}else if(pausaPorSalir){pausaPorSalir=false;tocar();}});
+  window.addEventListener("pagehide",function(){musica.pause();});
   tocar();
   var COL=["#ee8b84","#f6b79b","#f7d57c","#a7d8bd","#9fc8ec","#c4aee6","#f3b3c9"];
   function toast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("ver");clearTimeout(toast.k);toast.k=setTimeout(function(){t.classList.remove("ver")},2000);}
@@ -359,17 +362,15 @@
     while(x<300){var w=[2,4,1,3,2,5][k%6];s+='<rect x="'+x+'" y="0" width="'+w+'" height="42"/>';x+=w+[3,2,4,2,5,3][k%6];k++;}return s+'</g></svg>';})();
   function esc(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML;}
   function detalle(b){var a=[];if(b.mama)a.push("mamá");if(b.papa)a.push("papá");var t=a.length?"Con "+a.join(" y "):"";var h=+b.hermanos||0;if(h)t+=(t?" · ":"")+h+" hermanit"+(h>1?"os":"o");return (t?t+" · ":"")+"¡Te esperamos el domingo 6! ♡";}
-  function pintar(b){
+  var yaEnviado=false;
+  function pintar(b,vuelve){
+    yaEnviado=true;
     form.classList.add("oculto");res.classList.remove("oculto");
-    res.innerHTML=SELLO_SI+'<div class="listo"><small>PASAJERO</small><b>'+esc(b.nombre)+'</b><div class="det">'+esc(detalle(b))+'</div></div>'+CODIGO+'<button class="otra" type="button" id="otra">Confirmar a otra persona</button>';
-    document.getElementById("otra").addEventListener("click",function(){
-      form.reset();res.classList.add("oculto");form.classList.remove("oculto");
-      try{localStorage.removeItem("boleto-liz")}catch(e){}
-      document.getElementById("nombre").focus();
-    });
+    res.innerHTML=SELLO_SI+'<div class="listo"><small>PASAJERO</small><b>'+esc(b.nombre)+'</b><div class="det">'+esc(detalle(b))+'</div></div>'+CODIGO+'<p class="ya">'+(vuelve?'¡Hola de nuevo! Tu asiento ya está confirmado ✔':'¡Listo! Tu asiento quedó confirmado ✔')+'</p>';
   }
   form.addEventListener("submit",function(e){
     e.preventDefault();
+    if(yaEnviado)return;
     var aviso=document.getElementById("aviso"),btn=document.getElementById("enviar");
     var nombre=document.getElementById("nombre").value.trim();
     if(nombre.length<2){aviso.textContent="Escribe el nombre del niño o niña 🙂";document.getElementById("nombre").focus();return;}
@@ -382,7 +383,7 @@
       .catch(function(){aviso.textContent="No se pudo enviar. Revisa tu conexión e inténtalo otra vez.";})
       .finally(function(){btn.disabled=false;btn.textContent="¡Sí, ahí estaré! 🚢";});
   });
-  try{var g=JSON.parse(localStorage.getItem("boleto-liz")||"null");if(g&&g.nombre)pintar(g);}catch(e){}
+  try{var g=JSON.parse(localStorage.getItem("boleto-liz")||"null");if(g&&g.nombre)pintar(g,true);}catch(e){}
 })();
 </script>
 </body>
