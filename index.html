@@ -121,6 +121,15 @@
   /* entrada escalonada del contenido */
   .entra{animation:entra .6s ease-out both}
   @keyframes entra{from{opacity:0;transform:translateY(12px)}}
+  .acompanan{margin-top:12px}
+  .acompanan>span{display:block;font-size:19px;margin:0 0 6px;color:var(--tinta-2)}
+  .casillas{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .hermanos{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .casillas input,.hermanos input{position:absolute;opacity:0;pointer-events:none}
+  .casillas label,.hermanos label{display:block;text-align:center;padding:7px 4px;cursor:pointer;font-size:20px;border:2.5px solid var(--tinta);border-radius:var(--borde);background:#fffdf7;transition:transform .15s}
+  .hermanos label{font-family:"Caveat Brush";font-size:26px;padding:2px 0}
+  .casillas input:checked+label,.hermanos input:checked+label{background:var(--grano),var(--menta);box-shadow:3px 4px 0 rgba(61,52,82,.8);transform:rotate(-1.5deg)}
+  .casillas input:focus-visible+label,.hermanos input:focus-visible+label{outline:3px dashed var(--tinta);outline-offset:3px}
   @media (max-width:360px){.ojo{flex-basis:100px;height:100px}.ojo svg{width:100px;height:100px}.ojo img{width:78px;height:78px;inset:11px}.frase{font-size:20px}}
   @media (prefers-reduced-motion:reduce){*,*::before{animation:none!important}.arco{stroke-dashoffset:0}}
 </style>
@@ -285,7 +294,20 @@
     <div class="talon" id="talon">
       <form id="rsvp" novalidate>
         <h2>Confirma tu asiento</h2>
-        <input type="text" id="nombre" maxlength="80" autocomplete="name" placeholder="Tu nombre" aria-label="Tu nombre">
+        <input type="text" id="nombre" maxlength="80" autocomplete="off" placeholder="Nombre del niño o niña" aria-label="Nombre del niño o niña">
+        <div class="acompanan"><span>¿Quién lo acompaña?</span>
+          <div class="casillas">
+            <input type="checkbox" id="mama"><label for="mama">👩 Mamá</label>
+            <input type="checkbox" id="papa"><label for="papa">👨 Papá</label>
+          </div>
+          <span style="margin-top:10px">Hermanitos</span>
+          <div class="hermanos" role="radiogroup" aria-label="Hermanitos">
+            <input type="radio" name="hermanos" id="h0" value="0" checked><label for="h0">0</label>
+            <input type="radio" name="hermanos" id="h1" value="1"><label for="h1">1</label>
+            <input type="radio" name="hermanos" id="h2" value="2"><label for="h2">2</label>
+            <input type="radio" name="hermanos" id="h3" value="3"><label for="h3">3</label>
+          </div>
+        </div>
         <p class="aviso" id="aviso" role="alert"></p>
         <button class="confirmar" type="submit" id="enviar">¡Sí, ahí estaré! 🚢</button>
       </form>
@@ -321,9 +343,10 @@
   var CODIGO=(function(){var s='<svg class="codigo" viewBox="0 0 300 42" preserveAspectRatio="none" aria-hidden="true"><g filter="url(#crayon)" fill="#3d3452">',x=0,k=0;
     while(x<300){var w=[2,4,1,3,2,5][k%6];s+='<rect x="'+x+'" y="0" width="'+w+'" height="42"/>';x+=w+[3,2,4,2,5,3][k%6];k++;}return s+'</g></svg>';})();
   function esc(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML;}
+  function detalle(b){var a=[];if(b.mama)a.push("mamá");if(b.papa)a.push("papá");var t=a.length?"Con "+a.join(" y "):"";var h=+b.hermanos||0;if(h)t+=(t?" · ":"")+h+" hermanit"+(h>1?"os":"o");return (t?t+" · ":"")+"¡Te esperamos el domingo 6! ♡";}
   function pintar(b){
     form.classList.add("oculto");res.classList.remove("oculto");
-    res.innerHTML=SELLO_SI+'<div class="listo"><small>PASAJERO</small><b>'+esc(b.nombre)+'</b><div class="det">¡Te esperamos el domingo 6! ♡</div></div>'+CODIGO+'<button class="otra" type="button" id="otra">Confirmar a otra persona</button>';
+    res.innerHTML=SELLO_SI+'<div class="listo"><small>PASAJERO</small><b>'+esc(b.nombre)+'</b><div class="det">'+esc(detalle(b))+'</div></div>'+CODIGO+'<button class="otra" type="button" id="otra">Confirmar a otra persona</button>';
     document.getElementById("otra").addEventListener("click",function(){
       form.reset();res.classList.add("oculto");form.classList.remove("oculto");
       try{localStorage.removeItem("boleto-liz")}catch(e){}
@@ -334,9 +357,10 @@
     e.preventDefault();
     var aviso=document.getElementById("aviso"),btn=document.getElementById("enviar");
     var nombre=document.getElementById("nombre").value.trim();
-    if(nombre.length<2){aviso.textContent="Escribe tu nombre 🙂";document.getElementById("nombre").focus();return;}
+    if(nombre.length<2){aviso.textContent="Escribe el nombre del niño o niña 🙂";document.getElementById("nombre").focus();return;}
     aviso.textContent="";btn.disabled=true;btn.textContent="Enviando…";
-    var datos={nombre:nombre};
+    var hs=form.querySelector("input[name=hermanos]:checked");
+    var datos={nombre:nombre,mama:document.getElementById("mama").checked,papa:document.getElementById("papa").checked,hermanos:hs?+hs.value:0};
     fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(datos)})
       .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})
       .then(function(){try{localStorage.setItem("boleto-liz",JSON.stringify(datos))}catch(e){}pintar(datos);lluviaCrayolas();})
